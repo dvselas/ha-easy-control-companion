@@ -25,6 +25,7 @@ from .const import (
     CONF_ACTION_RATE_LIMIT_PER_MIN,
     CONF_ALLOWED_CIDRS,
     CONF_LOCAL_ONLY,
+    CONF_MQTT_ALLOW_UNTRUSTED_CERT,
     CONF_MQTT_BROKER_HOST,
     CONF_MQTT_BROKER_PORT,
     CONF_MQTT_PASSWORD,
@@ -48,6 +49,7 @@ from .const import (
     DEFAULT_ACTION_RATE_LIMIT_PER_MIN,
     DEFAULT_ALLOWED_CIDRS,
     DEFAULT_LOCAL_ONLY,
+    DEFAULT_MQTT_ALLOW_UNTRUSTED_CERT,
     DEFAULT_MQTT_BROKER_PORT,
     DEFAULT_MQTT_TOPIC_PREFIX,
     DEFAULT_MQTT_USE_TLS,
@@ -349,6 +351,9 @@ class GuestAccessPairView(HomeAssistantView):
                 "use_tls": entry_data.get(CONF_MQTT_USE_TLS, DEFAULT_MQTT_USE_TLS),
                 "topic_prefix": entry_data.get(
                     CONF_MQTT_TOPIC_PREFIX, DEFAULT_MQTT_TOPIC_PREFIX
+                ),
+                "allow_untrusted_cert": entry_data.get(
+                    CONF_MQTT_ALLOW_UNTRUSTED_CERT, DEFAULT_MQTT_ALLOW_UNTRUSTED_CERT
                 ),
             }
 

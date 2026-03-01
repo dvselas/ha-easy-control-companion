@@ -15,6 +15,7 @@ from .const import (
     CONF_ALLOWED_CIDRS,
     CONF_DEFAULT_REQUIRE_ADMIN_APPROVAL,
     CONF_LOCAL_ONLY,
+    CONF_MQTT_ALLOW_UNTRUSTED_CERT,
     CONF_MQTT_BROKER_HOST,
     CONF_MQTT_BROKER_PORT,
     CONF_MQTT_PASSWORD,
@@ -31,6 +32,7 @@ from .const import (
     DEFAULT_ALLOWED_CIDRS,
     DEFAULT_ENTRY_TITLE,
     DEFAULT_LOCAL_ONLY,
+    DEFAULT_MQTT_ALLOW_UNTRUSTED_CERT,
     DEFAULT_MQTT_BROKER_HOST,
     DEFAULT_MQTT_BROKER_PORT,
     DEFAULT_MQTT_PASSWORD,
@@ -76,6 +78,13 @@ class GuestAccessConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_QR_RATE_LIMIT_PER_MIN: DEFAULT_QR_RATE_LIMIT_PER_MIN,
                 CONF_NONCE_TTL_SECONDS: DEFAULT_NONCE_TTL_SECONDS,
                 CONF_ACTION_PROOF_CLOCK_SKEW_SECONDS: DEFAULT_ACTION_PROOF_CLOCK_SKEW_SECONDS,
+                CONF_MQTT_BROKER_HOST: DEFAULT_MQTT_BROKER_HOST,
+                CONF_MQTT_BROKER_PORT: DEFAULT_MQTT_BROKER_PORT,
+                CONF_MQTT_USERNAME: DEFAULT_MQTT_USERNAME,
+                CONF_MQTT_PASSWORD: DEFAULT_MQTT_PASSWORD,
+                CONF_MQTT_USE_TLS: DEFAULT_MQTT_USE_TLS,
+                CONF_MQTT_TOPIC_PREFIX: DEFAULT_MQTT_TOPIC_PREFIX,
+                CONF_MQTT_ALLOW_UNTRUSTED_CERT: DEFAULT_MQTT_ALLOW_UNTRUSTED_CERT,
             },
         )
 
@@ -121,6 +130,9 @@ class GuestAccessOptionsFlow(config_entries.OptionsFlow):
             mqtt_topic_prefix = str(
                 user_input.get(CONF_MQTT_TOPIC_PREFIX, DEFAULT_MQTT_TOPIC_PREFIX)
             ).strip()
+            mqtt_allow_untrusted_cert = bool(
+                user_input.get(CONF_MQTT_ALLOW_UNTRUSTED_CERT, DEFAULT_MQTT_ALLOW_UNTRUSTED_CERT)
+            )
             try:
                 allowed_cidrs = parse_allowed_cidrs_text(cidr_text)
             except ValueError:
@@ -158,6 +170,7 @@ class GuestAccessOptionsFlow(config_entries.OptionsFlow):
                             CONF_MQTT_PASSWORD: mqtt_password,
                             CONF_MQTT_USE_TLS: mqtt_use_tls,
                             CONF_MQTT_TOPIC_PREFIX: mqtt_topic_prefix,
+                            CONF_MQTT_ALLOW_UNTRUSTED_CERT: mqtt_allow_untrusted_cert,
                         },
                     )
 
@@ -208,6 +221,11 @@ class GuestAccessOptionsFlow(config_entries.OptionsFlow):
         current_mqtt_topic_prefix = str(
             self._get_entry_value(CONF_MQTT_TOPIC_PREFIX, DEFAULT_MQTT_TOPIC_PREFIX)
         ).strip()
+        current_mqtt_allow_untrusted_cert = bool(
+            self._get_entry_value(
+                CONF_MQTT_ALLOW_UNTRUSTED_CERT, DEFAULT_MQTT_ALLOW_UNTRUSTED_CERT
+            )
+        )
         current_allowed_cidrs = _normalize_entry_cidrs(current_allowed_cidrs_raw)
 
         return self.async_show_form(
@@ -275,6 +293,10 @@ class GuestAccessOptionsFlow(config_entries.OptionsFlow):
                         CONF_MQTT_TOPIC_PREFIX,
                         default=current_mqtt_topic_prefix,
                     ): str,
+                    vol.Optional(
+                        CONF_MQTT_ALLOW_UNTRUSTED_CERT,
+                        default=current_mqtt_allow_untrusted_cert,
+                    ): bool,
                 }
             ),
             errors=errors,

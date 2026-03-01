@@ -36,7 +36,8 @@
           "mqtt_username": "MQTT username (optional)",
           "mqtt_password": "MQTT password (optional)",
           "mqtt_use_tls": "Use TLS for MQTT connection",
-          "mqtt_topic_prefix": "MQTT topic prefix (e.g. homeassistant)"
+          "mqtt_topic_prefix": "MQTT topic prefix (e.g. homeassistant)",
+          "mqtt_allow_untrusted_cert": "Allow untrusted MQTT certificate"
         }
       }
     }
