@@ -1,0 +1,118 @@
+{
+  "config": {
+    "abort": {
+      "single_instance_allowed": "Only a single instance is allowed."
+    },
+    "step": {
+      "user": {
+        "title": "Set up HA Easy Control",
+        "description": "Create the HA Easy Control integration."
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "invalid_cidr": "CIDR list must contain valid RFC1918 networks only.",
+      "invalid_security_limits": "Security limits must be positive (clock skew may be zero).",
+      "invalid_mqtt_port": "MQTT port must be between 1 and 65535."
+    },
+    "step": {
+      "init": {
+        "title": "HA Easy Control network policy",
+        "data": {
+          "local_only": "Restrict guest API to local network only",
+          "require_device_binding": "Require device key registration during pairing",
+          "require_action_proof": "Require signed proof for action execution",
+          "default_require_admin_approval": "Require admin approval by default for new pairing passes",
+          "allowed_cidrs": "Allowed CIDR ranges (RFC1918 only, comma separated)",
+          "pair_rate_limit_per_min": "Pair endpoint requests per minute",
+          "action_rate_limit_per_min": "Action/nonce requests per minute",
+          "qr_rate_limit_per_min": "QR image requests per minute",
+          "states_rate_limit_per_min": "Entity states requests per minute",
+          "nonce_ttl_seconds": "Action nonce TTL (seconds)",
+          "action_proof_clock_skew_seconds": "Allowed action proof clock skew (seconds)",
+          "mqtt_broker_host": "MQTT broker hostname (optional, leave empty to disable)",
+          "mqtt_broker_port": "MQTT broker port",
+          "mqtt_username": "MQTT username (optional)",
+          "mqtt_password": "MQTT password (optional)",
+          "mqtt_use_tls": "Use TLS for MQTT connection",
+          "mqtt_topic_prefix": "MQTT topic prefix (e.g. homeassistant)"
+        }
+      }
+    }
+  },
+  "services": {
+    "create_guest_pass": {
+      "name": "Create guest pass",
+      "description": "Generate a short-lived pairing code and protected QR payload for guest onboarding.",
+      "fields": {
+        "entities": {
+          "name": "Entities",
+          "description": "Entities to grant guest access to. Actions are auto-inferred from domain."
+        },
+        "expiration_time": {
+          "name": "Expiration time",
+          "description": "Absolute datetime or relative seconds until pass expiration."
+        },
+        "show_qr_notification": {
+          "name": "Show QR notification",
+          "description": "Create a persistent notification in Home Assistant with a QR image link."
+        },
+        "require_admin_approval": {
+          "name": "Require admin approval",
+          "description": "Keep pairing pending until approved via easy_control.approve_pairing_request."
+        },
+        "email_recipient": {
+          "name": "Email recipient",
+          "description": "Email address to send the guest pass to. Requires email_notify_service."
+        },
+        "email_notify_service": {
+          "name": "Email notify service",
+          "description": "HA notify service for email delivery (e.g. 'email' for notify.email)."
+        },
+        "email_guest_name": {
+          "name": "Guest name",
+          "description": "Optional guest name to personalize the email."
+        }
+      }
+    },
+    "revoke_all_guest_pass": {
+      "name": "Revoke all guest passes",
+      "description": "Emergency revoke that invalidates all issued guest tokens and pairing codes."
+    },
+    "revoke_guest_pass": {
+      "name": "Revoke guest pass",
+      "description": "Revoke a specific guest token by jti or all tokens for a guest_id.",
+      "fields": {
+        "jti": {
+          "name": "Token jti",
+          "description": "Revoke a specific token id."
+        },
+        "guest_id": {
+          "name": "Guest ID",
+          "description": "Revoke all known tokens for the guest."
+        }
+      }
+    },
+    "approve_pairing_request": {
+      "name": "Approve pairing request",
+      "description": "Approve a pending pairing request created with require_admin_approval.",
+      "fields": {
+        "pairing_code": {
+          "name": "Pairing code",
+          "description": "Pairing code to approve."
+        }
+      }
+    },
+    "reject_pairing_request": {
+      "name": "Reject pairing request",
+      "description": "Reject a pending pairing request.",
+      "fields": {
+        "pairing_code": {
+          "name": "Pairing code",
+          "description": "Pairing code to reject."
+        }
+      }
+    }
+  }
+}
