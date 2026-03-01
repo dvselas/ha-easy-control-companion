@@ -13,7 +13,8 @@
   "options": {
     "error": {
       "invalid_cidr": "CIDR list must contain valid RFC1918 networks only.",
-      "invalid_security_limits": "Security limits must be positive (clock skew may be zero)."
+      "invalid_security_limits": "Security limits must be positive (clock skew may be zero).",
+      "invalid_mqtt_port": "MQTT port must be between 1 and 65535."
     },
     "step": {
       "init": {
@@ -29,7 +30,13 @@
           "qr_rate_limit_per_min": "QR image requests per minute",
           "states_rate_limit_per_min": "Entity states requests per minute",
           "nonce_ttl_seconds": "Action nonce TTL (seconds)",
-          "action_proof_clock_skew_seconds": "Allowed action proof clock skew (seconds)"
+          "action_proof_clock_skew_seconds": "Allowed action proof clock skew (seconds)",
+          "mqtt_broker_host": "MQTT broker hostname (optional, leave empty to disable)",
+          "mqtt_broker_port": "MQTT broker port",
+          "mqtt_username": "MQTT username (optional)",
+          "mqtt_password": "MQTT password (optional)",
+          "mqtt_use_tls": "Use TLS for MQTT connection",
+          "mqtt_topic_prefix": "MQTT topic prefix (e.g. homeassistant)"
         }
       }
     }

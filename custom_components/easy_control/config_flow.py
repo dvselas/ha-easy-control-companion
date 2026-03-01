@@ -15,6 +15,12 @@ from .const import (
     CONF_ALLOWED_CIDRS,
     CONF_DEFAULT_REQUIRE_ADMIN_APPROVAL,
     CONF_LOCAL_ONLY,
+    CONF_MQTT_BROKER_HOST,
+    CONF_MQTT_BROKER_PORT,
+    CONF_MQTT_PASSWORD,
+    CONF_MQTT_TOPIC_PREFIX,
+    CONF_MQTT_USE_TLS,
+    CONF_MQTT_USERNAME,
     CONF_NONCE_TTL_SECONDS,
     CONF_PAIR_RATE_LIMIT_PER_MIN,
     CONF_QR_RATE_LIMIT_PER_MIN,
@@ -25,6 +31,12 @@ from .const import (
     DEFAULT_ALLOWED_CIDRS,
     DEFAULT_ENTRY_TITLE,
     DEFAULT_LOCAL_ONLY,
+    DEFAULT_MQTT_BROKER_HOST,
+    DEFAULT_MQTT_BROKER_PORT,
+    DEFAULT_MQTT_PASSWORD,
+    DEFAULT_MQTT_TOPIC_PREFIX,
+    DEFAULT_MQTT_USE_TLS,
+    DEFAULT_MQTT_USERNAME,
     DEFAULT_NONCE_TTL_SECONDS,
     DEFAULT_PAIR_RATE_LIMIT_PER_MIN,
     DEFAULT_QR_RATE_LIMIT_PER_MIN,
@@ -101,6 +113,14 @@ class GuestAccessOptionsFlow(config_entries.OptionsFlow):
             qr_rate_limit = int(user_input[CONF_QR_RATE_LIMIT_PER_MIN])
             nonce_ttl_seconds = int(user_input[CONF_NONCE_TTL_SECONDS])
             proof_clock_skew = int(user_input[CONF_ACTION_PROOF_CLOCK_SKEW_SECONDS])
+            mqtt_host = str(user_input.get(CONF_MQTT_BROKER_HOST, "")).strip()
+            mqtt_port = int(user_input.get(CONF_MQTT_BROKER_PORT, DEFAULT_MQTT_BROKER_PORT))
+            mqtt_username = str(user_input.get(CONF_MQTT_USERNAME, "")).strip()
+            mqtt_password = str(user_input.get(CONF_MQTT_PASSWORD, "")).strip()
+            mqtt_use_tls = bool(user_input.get(CONF_MQTT_USE_TLS, DEFAULT_MQTT_USE_TLS))
+            mqtt_topic_prefix = str(
+                user_input.get(CONF_MQTT_TOPIC_PREFIX, DEFAULT_MQTT_TOPIC_PREFIX)
+            ).strip()
             try:
                 allowed_cidrs = parse_allowed_cidrs_text(cidr_text)
             except ValueError:
@@ -114,6 +134,8 @@ class GuestAccessOptionsFlow(config_entries.OptionsFlow):
                     or proof_clock_skew < 0
                 ):
                     errors["base"] = "invalid_security_limits"
+                elif mqtt_host and not (1 <= mqtt_port <= 65535):
+                    errors["base"] = "invalid_mqtt_port"
                 else:
                     return self.async_create_entry(
                         title="",
@@ -130,6 +152,12 @@ class GuestAccessOptionsFlow(config_entries.OptionsFlow):
                             CONF_QR_RATE_LIMIT_PER_MIN: qr_rate_limit,
                             CONF_NONCE_TTL_SECONDS: nonce_ttl_seconds,
                             CONF_ACTION_PROOF_CLOCK_SKEW_SECONDS: proof_clock_skew,
+                            CONF_MQTT_BROKER_HOST: mqtt_host,
+                            CONF_MQTT_BROKER_PORT: mqtt_port,
+                            CONF_MQTT_USERNAME: mqtt_username,
+                            CONF_MQTT_PASSWORD: mqtt_password,
+                            CONF_MQTT_USE_TLS: mqtt_use_tls,
+                            CONF_MQTT_TOPIC_PREFIX: mqtt_topic_prefix,
                         },
                     )
 
@@ -162,6 +190,24 @@ class GuestAccessOptionsFlow(config_entries.OptionsFlow):
             CONF_ACTION_PROOF_CLOCK_SKEW_SECONDS,
             DEFAULT_ACTION_PROOF_CLOCK_SKEW_SECONDS,
         )
+        current_mqtt_host = str(
+            self._get_entry_value(CONF_MQTT_BROKER_HOST, DEFAULT_MQTT_BROKER_HOST)
+        ).strip()
+        current_mqtt_port = self._get_entry_value(
+            CONF_MQTT_BROKER_PORT, DEFAULT_MQTT_BROKER_PORT
+        )
+        current_mqtt_username = str(
+            self._get_entry_value(CONF_MQTT_USERNAME, DEFAULT_MQTT_USERNAME)
+        ).strip()
+        current_mqtt_password = str(
+            self._get_entry_value(CONF_MQTT_PASSWORD, DEFAULT_MQTT_PASSWORD)
+        ).strip()
+        current_mqtt_use_tls = self._get_entry_value(
+            CONF_MQTT_USE_TLS, DEFAULT_MQTT_USE_TLS
+        )
+        current_mqtt_topic_prefix = str(
+            self._get_entry_value(CONF_MQTT_TOPIC_PREFIX, DEFAULT_MQTT_TOPIC_PREFIX)
+        ).strip()
         current_allowed_cidrs = _normalize_entry_cidrs(current_allowed_cidrs_raw)
 
         return self.async_show_form(
@@ -205,6 +251,30 @@ class GuestAccessOptionsFlow(config_entries.OptionsFlow):
                         CONF_ACTION_PROOF_CLOCK_SKEW_SECONDS,
                         default=current_proof_clock_skew,
                     ): vol.Coerce(int),
+                    vol.Optional(
+                        CONF_MQTT_BROKER_HOST,
+                        default=current_mqtt_host,
+                    ): str,
+                    vol.Optional(
+                        CONF_MQTT_BROKER_PORT,
+                        default=current_mqtt_port,
+                    ): vol.Coerce(int),
+                    vol.Optional(
+                        CONF_MQTT_USERNAME,
+                        default=current_mqtt_username,
+                    ): str,
+                    vol.Optional(
+                        CONF_MQTT_PASSWORD,
+                        default=current_mqtt_password,
+                    ): str,
+                    vol.Optional(
+                        CONF_MQTT_USE_TLS,
+                        default=current_mqtt_use_tls,
+                    ): bool,
+                    vol.Optional(
+                        CONF_MQTT_TOPIC_PREFIX,
+                        default=current_mqtt_topic_prefix,
+                    ): str,
                 }
             ),
             errors=errors,

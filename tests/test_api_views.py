@@ -1473,3 +1473,101 @@ async def test_states_view_returns_cover_attributes(
     assert cover["current_position"] == 65
     assert cover["current_tilt_position"] == 30
     assert cover["supported_features"] == 255
+
+
+# ---------------------------------------------------------------------------
+# MQTT: pairing response includes/excludes mqtt_config
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_pairing_response_includes_mqtt_config_when_configured(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Pairing response includes mqtt_config when MQTT broker host is set."""
+    from custom_components.easy_control.const import (
+        CONF_MQTT_BROKER_HOST,
+        CONF_MQTT_BROKER_PORT,
+        CONF_MQTT_PASSWORD,
+        CONF_MQTT_TOPIC_PREFIX,
+        CONF_MQTT_USE_TLS,
+        CONF_MQTT_USERNAME,
+    )
+
+    domain_data = _build_domain_data()
+    # Inject MQTT config into entry data.
+    domain_data["entry-1"][CONF_MQTT_BROKER_HOST] = "mqtt.example.com"
+    domain_data["entry-1"][CONF_MQTT_BROKER_PORT] = 8883
+    domain_data["entry-1"][CONF_MQTT_USERNAME] = "guest_user"
+    domain_data["entry-1"][CONF_MQTT_PASSWORD] = "guest_pass"
+    domain_data["entry-1"][CONF_MQTT_USE_TLS] = True
+    domain_data["entry-1"][CONF_MQTT_TOPIC_PREFIX] = "ha_prod"
+
+    pairing_store: PairingStore = domain_data[DATA_PAIRING_STORE]
+    pairing = pairing_store.create_pairing(
+        entity_id="cover.garage",
+        allowed_action="garage.open",
+        pass_expires_at=2_000_000_000,
+    )
+    hass = _FakeHass(domain_data)
+    request = _FakeRequest(
+        hass=hass,
+        json_payload={"pairing_code": pairing.pairing_code},
+        path="/api/easy_control/pair",
+    )
+
+    async def _noop_register(*args, **kwargs):  # type: ignore[no-untyped-def]
+        del args, kwargs
+
+    monkeypatch.setattr(
+        "custom_components.easy_control.api.async_register_issued_token",
+        _noop_register,
+    )
+
+    response = await GuestAccessPairView().post(request)
+    body = _json_body(response)
+
+    assert response.status == 200
+    assert "mqtt_config" in body
+    mqtt = body["mqtt_config"]
+    assert mqtt["host"] == "mqtt.example.com"
+    assert mqtt["port"] == 8883
+    assert mqtt["username"] == "guest_user"
+    assert mqtt["password"] == "guest_pass"
+    assert mqtt["use_tls"] is True
+    assert mqtt["topic_prefix"] == "ha_prod"
+
+
+@pytest.mark.asyncio
+async def test_pairing_response_excludes_mqtt_config_when_not_configured(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Pairing response omits mqtt_config when MQTT broker host is empty."""
+    domain_data = _build_domain_data()
+    # No MQTT config set — defaults are empty strings.
+    pairing_store: PairingStore = domain_data[DATA_PAIRING_STORE]
+    pairing = pairing_store.create_pairing(
+        entity_id="lock.front",
+        allowed_action="door.unlock",
+        pass_expires_at=2_000_000_000,
+    )
+    hass = _FakeHass(domain_data)
+    request = _FakeRequest(
+        hass=hass,
+        json_payload={"pairing_code": pairing.pairing_code},
+        path="/api/easy_control/pair",
+    )
+
+    async def _noop_register(*args, **kwargs):  # type: ignore[no-untyped-def]
+        del args, kwargs
+
+    monkeypatch.setattr(
+        "custom_components.easy_control.api.async_register_issued_token",
+        _noop_register,
+    )
+
+    response = await GuestAccessPairView().post(request)
+    body = _json_body(response)
+
+    assert response.status == 200
+    assert "mqtt_config" not in body

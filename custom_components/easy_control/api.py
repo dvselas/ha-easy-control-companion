@@ -25,6 +25,12 @@ from .const import (
     CONF_ACTION_RATE_LIMIT_PER_MIN,
     CONF_ALLOWED_CIDRS,
     CONF_LOCAL_ONLY,
+    CONF_MQTT_BROKER_HOST,
+    CONF_MQTT_BROKER_PORT,
+    CONF_MQTT_PASSWORD,
+    CONF_MQTT_TOPIC_PREFIX,
+    CONF_MQTT_USE_TLS,
+    CONF_MQTT_USERNAME,
     CONF_NONCE_TTL_SECONDS,
     CONF_PAIR_RATE_LIMIT_PER_MIN,
     CONF_QR_RATE_LIMIT_PER_MIN,
@@ -42,6 +48,9 @@ from .const import (
     DEFAULT_ACTION_RATE_LIMIT_PER_MIN,
     DEFAULT_ALLOWED_CIDRS,
     DEFAULT_LOCAL_ONLY,
+    DEFAULT_MQTT_BROKER_PORT,
+    DEFAULT_MQTT_TOPIC_PREFIX,
+    DEFAULT_MQTT_USE_TLS,
     DEFAULT_NONCE_TTL_SECONDS,
     DEFAULT_PAIR_RATE_LIMIT_PER_MIN,
     DEFAULT_QR_RATE_LIMIT_PER_MIN,
@@ -311,26 +320,39 @@ class GuestAccessPairView(HomeAssistantView):
             device_public_key=device_public_key if isinstance(device_public_key, str) else None,
         )
 
-        return self.json(
-            {
-                "guest_token": guest_token,
-                "entities": token_payload.to_dict()["entities"],
-                "allowed_actions": [
-                    a
-                    for e in token_payload.entities
-                    for a in e.get("allowed_actions", [])
-                ],
-                "entity_id": token_payload.entity_id,
-                "expires_at": token_payload.exp,
-                "guest_id": token_payload.guest_id,
-                "max_uses": token_payload.max_uses,
-                "proof_required": require_action_proof,
-                "device_binding_required": require_device_binding,
-                "nonce_endpoint": "/api/easy_control/action/nonce",
-                "states_endpoint": "/api/easy_control/states",
-                "scan_ack_supported": True,
+        response_data: dict[str, Any] = {
+            "guest_token": guest_token,
+            "entities": token_payload.to_dict()["entities"],
+            "allowed_actions": [
+                a
+                for e in token_payload.entities
+                for a in e.get("allowed_actions", [])
+            ],
+            "entity_id": token_payload.entity_id,
+            "expires_at": token_payload.exp,
+            "guest_id": token_payload.guest_id,
+            "max_uses": token_payload.max_uses,
+            "proof_required": require_action_proof,
+            "device_binding_required": require_device_binding,
+            "nonce_endpoint": "/api/easy_control/action/nonce",
+            "states_endpoint": "/api/easy_control/states",
+            "scan_ack_supported": True,
+        }
+
+        mqtt_host = str(entry_data.get(CONF_MQTT_BROKER_HOST, "")).strip()
+        if mqtt_host:
+            response_data["mqtt_config"] = {
+                "host": mqtt_host,
+                "port": entry_data.get(CONF_MQTT_BROKER_PORT, DEFAULT_MQTT_BROKER_PORT),
+                "username": entry_data.get(CONF_MQTT_USERNAME, "") or None,
+                "password": entry_data.get(CONF_MQTT_PASSWORD, "") or None,
+                "use_tls": entry_data.get(CONF_MQTT_USE_TLS, DEFAULT_MQTT_USE_TLS),
+                "topic_prefix": entry_data.get(
+                    CONF_MQTT_TOPIC_PREFIX, DEFAULT_MQTT_TOPIC_PREFIX
+                ),
             }
-        )
+
+        return self.json(response_data)
 
 
 class GuestAccessPairScannedView(HomeAssistantView):

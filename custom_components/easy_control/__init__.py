@@ -14,6 +14,12 @@ from .const import (
     CONF_ALLOWED_CIDRS,
     CONF_DEFAULT_REQUIRE_ADMIN_APPROVAL,
     CONF_LOCAL_ONLY,
+    CONF_MQTT_BROKER_HOST,
+    CONF_MQTT_BROKER_PORT,
+    CONF_MQTT_PASSWORD,
+    CONF_MQTT_TOPIC_PREFIX,
+    CONF_MQTT_USE_TLS,
+    CONF_MQTT_USERNAME,
     CONF_NONCE_TTL_SECONDS,
     CONF_PAIR_RATE_LIMIT_PER_MIN,
     CONF_QR_RATE_LIMIT_PER_MIN,
@@ -30,6 +36,12 @@ from .const import (
     DEFAULT_ACTION_RATE_LIMIT_PER_MIN,
     DEFAULT_ALLOWED_CIDRS,
     DEFAULT_LOCAL_ONLY,
+    DEFAULT_MQTT_BROKER_HOST,
+    DEFAULT_MQTT_BROKER_PORT,
+    DEFAULT_MQTT_PASSWORD,
+    DEFAULT_MQTT_TOPIC_PREFIX,
+    DEFAULT_MQTT_USE_TLS,
+    DEFAULT_MQTT_USERNAME,
     DEFAULT_NONCE_TTL_SECONDS,
     DEFAULT_PAIR_RATE_LIMIT_PER_MIN,
     DEFAULT_QR_RATE_LIMIT_PER_MIN,
@@ -105,6 +117,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: GuestAccessConfigEntry) 
         CONF_ACTION_PROOF_CLOCK_SKEW_SECONDS,
         DEFAULT_ACTION_PROOF_CLOCK_SKEW_SECONDS,
     )
+    mqtt_broker_host = str(
+        _get_entry_value(entry, CONF_MQTT_BROKER_HOST, DEFAULT_MQTT_BROKER_HOST)
+    ).strip()
+    mqtt_broker_port = _get_int_entry_value(
+        entry, CONF_MQTT_BROKER_PORT, DEFAULT_MQTT_BROKER_PORT
+    )
+    mqtt_username = str(
+        _get_entry_value(entry, CONF_MQTT_USERNAME, DEFAULT_MQTT_USERNAME)
+    ).strip()
+    mqtt_password = str(
+        _get_entry_value(entry, CONF_MQTT_PASSWORD, DEFAULT_MQTT_PASSWORD)
+    ).strip()
+    mqtt_use_tls = _get_bool_entry_value(entry, CONF_MQTT_USE_TLS, DEFAULT_MQTT_USE_TLS)
+    mqtt_topic_prefix = str(
+        _get_entry_value(entry, CONF_MQTT_TOPIC_PREFIX, DEFAULT_MQTT_TOPIC_PREFIX)
+    ).strip()
 
     domain_data[entry.entry_id] = {
         CONF_TOKEN_VERSION: token_version,
@@ -118,6 +146,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: GuestAccessConfigEntry) 
         CONF_QR_RATE_LIMIT_PER_MIN: qr_rate_limit_per_min,
         CONF_NONCE_TTL_SECONDS: nonce_ttl_seconds,
         CONF_ACTION_PROOF_CLOCK_SKEW_SECONDS: proof_clock_skew,
+        CONF_MQTT_BROKER_HOST: mqtt_broker_host,
+        CONF_MQTT_BROKER_PORT: mqtt_broker_port,
+        CONF_MQTT_USERNAME: mqtt_username,
+        CONF_MQTT_PASSWORD: mqtt_password,
+        CONF_MQTT_USE_TLS: mqtt_use_tls,
+        CONF_MQTT_TOPIC_PREFIX: mqtt_topic_prefix,
         DATA_TOKEN_MANAGER: GuestTokenManager(signing_keys=signing_keys, active_kid=active_kid),
     }
     config_entries.add(entry.entry_id)
