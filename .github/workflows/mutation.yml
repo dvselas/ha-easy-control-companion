@@ -24,5 +24,5 @@ jobs:
 
       - name: Run mutation tests on critical security modules
         run: |
-          mutmut run || true
+          mutmut run --paths-to-mutate custom_components/easy_control/token.py,custom_components/easy_control/pairing.py,custom_components/easy_control/api.py || true
           mutmut results

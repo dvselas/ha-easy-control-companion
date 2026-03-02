@@ -3,4 +3,4 @@ pytest-cov
 ruff
 mypy
 pip-audit
-mutmut
+mutmut>=2.0,<3
