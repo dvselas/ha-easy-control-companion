@@ -113,10 +113,10 @@ service: easy_control.create_guest_pass
 data:
   entities:
     - lock.front_door
-  expiration_time: 3600
+  expiration_time: "2025-03-15 18:00:00"
 ```
 
-This creates a pairing code valid for 5 minutes. The guest has that window to scan the QR code with the iOS app. Once paired, their token is valid for the duration you specified (3600 seconds = 1 hour).
+This creates a pairing code valid for 5 minutes. The guest has that window to scan the QR code with the iOS app. Once paired, their token is valid until the date and time you specified.
 
 #### Multiple entities
 
@@ -128,7 +128,7 @@ data:
     - cover.garage_door
     - light.porch
     - sensor.indoor_temperature
-  expiration_time: 7200
+  expiration_time: "2025-03-16 12:00:00"
 ```
 
 Actions are auto-inferred from the entity domain — locks get lock/unlock, covers get open/close/position/tilt, lights get on/off/brightness, sensors get read-only access.
@@ -144,7 +144,7 @@ service: easy_control.create_guest_pass
 data:
   entities:
     - lock.front_door
-  expiration_time: 3600
+  expiration_time: "2025-03-15 18:00:00"
   require_admin_approval: true
 ```
 
@@ -184,7 +184,7 @@ service: easy_control.create_guest_pass
 data:
   entities:
     - lock.front_door
-  expiration_time: 3600
+  expiration_time: "2025-03-15 18:00:00"
   email_recipient: "guest@example.com"
   email_notify_service: "email"
   email_guest_name: "Alice"

@@ -19,10 +19,10 @@ create_guest_pass:
             - binary_sensor
     expiration_time:
       name: Expiration time
-      description: Absolute datetime or relative seconds until pass expiration.
+      description: Date and time when the guest pass expires.
       required: true
       selector:
-        text:
+        datetime:
     show_qr_notification:
       name: Show QR notification
       description: Create a persistent notification in Home Assistant with a QR image link.

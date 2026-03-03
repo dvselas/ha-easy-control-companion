@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -52,7 +53,7 @@ def base_call_data(now_ts: int) -> dict:
     """Minimal valid call data for create_guest_pass."""
     return {
         CONF_ENTITIES: ["lock.front_door"],
-        CONF_EXPIRATION_TIME: now_ts + 3600,
+        CONF_EXPIRATION_TIME: datetime.now(tz=UTC) + timedelta(hours=1),
         CONF_SHOW_QR_NOTIFICATION: False,
     }
 

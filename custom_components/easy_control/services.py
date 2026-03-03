@@ -59,7 +59,7 @@ _LOGGER = logging.getLogger(__name__)
 SERVICE_CREATE_PASS_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_ENTITIES): vol.All(cv.ensure_list, [cv.entity_id]),
-        vol.Required(CONF_EXPIRATION_TIME): vol.Any(cv.positive_int, cv.datetime),
+        vol.Required(CONF_EXPIRATION_TIME): cv.datetime,
         vol.Optional(CONF_SHOW_QR_NOTIFICATION, default=True): bool,
         vol.Optional(CONF_REQUIRE_ADMIN_APPROVAL): bool,
         vol.Optional(CONF_EMAIL_RECIPIENT): cv.string,
@@ -519,21 +519,17 @@ def _validate_and_resolve_entities(
 
 
 def _resolve_pass_expiration(hass: HomeAssistant, expiration_value: Any) -> int:
-    """Convert expiration input to Unix timestamp, ensuring future expiry."""
+    """Convert expiration datetime to Unix timestamp, ensuring future expiry."""
     now_timestamp = int(dt_util.utcnow().timestamp())
 
-    if isinstance(expiration_value, (int, float)):
-        pass_expires_at = now_timestamp + int(expiration_value)
-    elif isinstance(expiration_value, datetime):
-        expiration_datetime = expiration_value
-        if expiration_datetime.tzinfo is None:
-            local_timezone = dt_util.get_time_zone(hass.config.time_zone)
-            expiration_datetime = expiration_datetime.replace(tzinfo=local_timezone)
-        pass_expires_at = int(expiration_datetime.timestamp())
-    else:
-        raise HomeAssistantError(
-            "expiration_time must be either a positive number of seconds or datetime"
-        )
+    if not isinstance(expiration_value, datetime):
+        raise HomeAssistantError("expiration_time must be a datetime")
+
+    expiration_datetime = expiration_value
+    if expiration_datetime.tzinfo is None:
+        local_timezone = dt_util.get_time_zone(hass.config.time_zone)
+        expiration_datetime = expiration_datetime.replace(tzinfo=local_timezone)
+    pass_expires_at = int(expiration_datetime.timestamp())
 
     if pass_expires_at <= now_timestamp:
         raise HomeAssistantError("expiration_time must point to a future time")

@@ -53,7 +53,7 @@
         },
         "expiration_time": {
           "name": "Expiration time",
-          "description": "Absolute datetime or relative seconds until pass expiration."
+          "description": "Date and time when the guest pass expires."
         },
         "show_qr_notification": {
           "name": "Show QR notification",
