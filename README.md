@@ -7,7 +7,7 @@ Give guests, family and friends scoped, time-limited access to your smart home �
 
 ## Overview
 
-HA Easy Control is a Home Assistant custom integration that lets you create temporary guest passes for specific devices. Guests scan a QR code (or tap a link in an email) with the iOS companion app and get instant access — scoped to exactly the entities and actions you allow.
+HA Easy Control is a Home Assistant custom integration that lets you create temporary guest passes for specific devices. Guests scan a QR code (or tap a link in an email) with the [iOS companion app](https://github.com/dvselas/ha-easy-control-companion) and get instant access — scoped to exactly the entities and actions you allow.
 
 No passwords, no shared accounts, no full dashboard access. When the pass expires or you revoke it, access is gone.
 
@@ -19,6 +19,7 @@ No passwords, no shared accounts, no full dashboard access. When the pass expire
 - **Email delivery** — send the QR code and a clickable deep link directly to the guest's inbox
 - **Admin approval workflow** — optionally require manual approval before a pass becomes active
 - **Revocation** — revoke a single token, all tokens for a guest, or all tokens globally
+- **MQTT real-time updates** — optional live entity state push to the iOS app via MQTT 5.0
 - **Rate limiting** — per-endpoint rate limits to prevent abuse
 - **Local-only mode** — optionally restrict access to your local network
 - **Device binding** — optional Ed25519 cryptographic proof-of-possession
@@ -86,6 +87,20 @@ All options are configured through the integration's options flow in the UI.
 | Nonce TTL | 45 seconds | How long a single-use nonce remains valid |
 | Clock skew tolerance | 30 seconds | Allowed time drift for action proofs |
 
+### MQTT
+
+Optional MQTT broker configuration for real-time entity state updates in the iOS app. Leave the broker host empty to disable.
+
+| Option | Default | Description |
+|---|---|---|
+| MQTT broker host | *(empty — disabled)* | Hostname or IP of your MQTT broker |
+| MQTT broker port | `1883` | Broker port |
+| MQTT username | *(empty)* | Authentication username (optional) |
+| MQTT password | *(empty)* | Authentication password (optional) |
+| Use TLS | `false` | Enable TLS encryption for the MQTT connection |
+| Topic prefix | `homeassistant` | MQTT topic prefix (must match your Statestream config) |
+| Allow untrusted certificate | `false` | Accept self-signed or untrusted TLS certificates |
+
 ## Usage
 
 ### Creating a Guest Pass
@@ -111,10 +126,11 @@ data:
     - lock.front_door
     - cover.garage_door
     - light.porch
+    - sensor.indoor_temperature
   expiration_time: 7200
 ```
 
-Actions are auto-inferred from the entity domain — locks get lock/unlock, covers get open/close, lights get on/off, sensors get read-only access.
+Actions are auto-inferred from the entity domain — locks get lock/unlock, covers get open/close/position/tilt, lights get on/off/brightness, sensors get read-only access.
 
 #### Limited uses
 
@@ -234,6 +250,31 @@ data:
   pairing_code: "ABC123XYZ0"
 ```
 
+## MQTT Real-Time Updates
+
+By default the iOS app polls for entity state changes over HTTP. With MQTT enabled, state changes are pushed to the app instantly — so the guest sees lock/cover/sensor status update in real time.
+
+### How it works
+
+1. You run an MQTT broker (e.g. Mosquitto) and the Home Assistant [MQTT Statestream](https://www.home-assistant.io/integrations/mqtt_statestream/) integration
+2. Statestream publishes entity states to MQTT topics like `homeassistant/lock/front_door/state`
+3. You configure the broker details in the Easy Control integration options
+4. When a guest pairs, the MQTT connection details are included in the pairing response
+5. The iOS app subscribes to the relevant entity topics and receives instant updates
+
+### Setup
+
+1. Install and configure an MQTT broker (e.g. [Mosquitto add-on](https://github.com/home-assistant/addons/tree/master/mosquitto))
+2. Add the [MQTT Statestream](https://www.home-assistant.io/integrations/mqtt_statestream/) integration to your `configuration.yaml`:
+   ```yaml
+   mqtt_statestream:
+     base_topic: homeassistant
+     publish_attributes: false
+     publish_timestamps: false
+   ```
+3. Go to **Settings → Devices & Services → HA Easy Control → Configure** and fill in the MQTT broker details
+4. The topic prefix must match the `base_topic` in your Statestream config (default: `homeassistant`)
+
 ## iOS Companion App
 
 The [HA Easy Control iOS app](https://github.com/dvselas/ha-easy-control-companion) is the guest-facing client.
@@ -251,18 +292,19 @@ The [HA Easy Control iOS app](https://github.com/dvselas/ha-easy-control-compani
 - Secure token storage in iOS Keychain
 - TLS certificate pinning
 - Ed25519 device key generation for proof-of-possession
+- MQTT 5.0 real-time state updates (when configured)
 
 ## Supported Entities & Actions
 
 | Entity Domain | Actions | HA Service Called |
 |---|---|---|
 | `lock.*` | `door.lock`, `door.unlock` | `lock.lock`, `lock.unlock` |
-| `cover.*` | `garage.open`, `garage.close` | `cover.open_cover`, `cover.close_cover` |
+| `cover.*` | `garage.open`, `garage.close`, `garage.set_position`, `garage.set_tilt` | `cover.open_cover`, `cover.close_cover`, `cover.set_cover_position`, `cover.set_cover_tilt_position` |
 | `switch.*` | `switch.on`, `switch.off` | `switch.turn_on`, `switch.turn_off` |
-| `light.*` | `light.on`, `light.off` | `light.turn_on`, `light.turn_off` |
+| `light.*` | `light.on`, `light.off`, `light.set_brightness` | `light.turn_on`, `light.turn_off` (with brightness data) |
 | `sensor.*` | `sensor.read` | Read-only (state retrieval) |
 | `binary_sensor.*` | `binary_sensor.read` | Read-only (state retrieval) |
-| `climate.*` | `climate.read` | Read-only (state retrieval) |
+| `climate.*` | `climate.read`, `climate.set_temperature` | Read-only + `climate.set_temperature` |
 
 Actions are auto-inferred from the entity domain — you don't need to specify them manually.
 
@@ -312,6 +354,9 @@ automation:
 | Guest can't reach the server | If `local_only` is enabled, the guest must be on your local network. Check `allowed_cidrs`. |
 | QR notification not showing | Ensure `show_qr_notification` is not set to `false` |
 | "Pending approval" on guest's phone | You need to call `approve_pairing_request` with the pairing code |
+| MQTT not connecting | Verify broker host/port are correct. Check that the broker allows the configured username/password. |
+| Entity states not updating in real time | Ensure MQTT Statestream is configured and the topic prefix matches the Easy Control config. |
+| Self-signed cert rejected | Enable "Allow untrusted certificate" in the MQTT configuration options |
 
 ## License
 
