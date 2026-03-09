@@ -6,6 +6,7 @@ from collections.abc import Iterable
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 
 from .api import async_register_api
 from .const import (
@@ -60,6 +61,7 @@ from .storage import async_get_or_create_security_state, async_get_signing_keyri
 from .token import GuestTokenManager
 
 GuestAccessConfigEntry = ConfigEntry
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
